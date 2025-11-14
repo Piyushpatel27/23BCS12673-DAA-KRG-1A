@@ -6,6 +6,7 @@ Home:
 
 <img width="1897" height="862" alt="image" src="https://github.com/user-attachments/assets/8ad8b81a-4bb3-44dc-85b6-c4bf98725a45" />
 
+
 <img width="1899" height="864" alt="image" src="https://github.com/user-attachments/assets/2b2c9d29-f34c-447b-9443-6ac37f2fa5e1" />
 
 Visualizer:
