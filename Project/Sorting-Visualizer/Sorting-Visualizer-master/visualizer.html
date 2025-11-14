@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sorting Visualizer</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* === CSS VARIABLE THEME SETUP === */
+    :root {
+      --bg-color: #ffffff;
+      --text-color: #222;
+      --menu-text: #333;
+      --hover-color: #18d8b1;
+      --block-color: #4caf50;
+      --highlight-color: #ff4081;
+    }
+    body.dark-mode {
+      --bg-color: #121212;
+      --text-color: #e0e0e0;
+      --menu-text: #e0e0e0;
+      --hover-color: #18d8b1;
+      --block-color: #2196f3;
+      --highlight-color: #ff4081;
+    }
+
+    /* === GENERAL STYLES === */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+      transition: background-color 0.5s ease, color 0.5s ease;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      text-align: center;
+    }
+
+    h1 { margin: 20px; }
+
+    .menu {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: var(--bg-color);
+      padding: 15px 0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+
+    .menu a {
+      color: var(--menu-text);
+      text-decoration: none;
+      font-weight: 600;
+      margin: 0 15px;
+      position: relative;
+      transition: color 0.3s ease-in-out;
+    }
+
+    .menu a::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -6px;
+      width: 0;
+      height: 3px;
+      background: #18d8b1;
+      transition: 0.3s ease-in-out;
+      transform: translateX(-50%);
+    }
+
+    .menu a:hover {
+      color: var(--hover-color);
+    }
+
+    .menu a:hover::after {
+      width: 100%;
+      background: #18d8b1;
+    }
+
+    #theme-toggle {
+      background: transparent;
+      border: none;
+      color: var(--menu-text);
+      font-size: 20px;
+      cursor: pointer;
+      margin-left: 20px;
+      transition: color 0.3s ease-in-out;
+    }
+
+    #theme-toggle:hover {
+      color: var(--hover-color);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .controls {
+      margin: 20px;
+    }
+
+    .controls input[type="text"],
+    .controls select,
+    .controls button {
+      margin: 0 10px;
+      padding: 10px;
+      font-size: 1em;
+    }
+
+    .controls label {
+      margin: 0 10px;
+    }
+
+    #array-container {
+      max-width: 1000px;
+      margin: 20px auto;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .block {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: 600;
+      color: #fff;
+      border-radius: 8px;
+      background-color: var(--block-color);
+      transition: transform 0.2s;
+    }
+
+    .highlight {
+      background-color: var(--highlight-color) !important;
+    }
+
+    .sorted {
+      background-color: #18d8b1 !important;
+    }
+
+    .compare {
+      background-color: #ff9800 !important;
+    }
+
+    .swap {
+      background-color: #f44336 !important;
+    }
+
+    .legend {
+      margin-top: 10px;
+    }
+
+    .chip {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      margin-right: 5px;
+    }
+
+    .chip-compare { background-color: #ff9800; }
+    .chip-swap { background-color: #f44336; }
+    .chip-sorted { background-color: #18d8b1; }
+
+    /* Merge panels */
+    .merge-panels {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin: 20px;
+      flex-wrap: wrap;
+    }
+
+    .merge-card {
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 8px;
+      width: 200px;
+    }
+
+    .merge-array {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="menu">
+    <a href="index.html">Home</a>
+    <a href="algorithms.html">Algorithms</a>
+    <a href="visualizer.html">Visualizer</a>
+    <a href="about.html">About</a>
+    <button id="theme-toggle">🌙</button>
+  </nav>
+
+  <br><br><br><br><br><br>
+
+  <section class="visualizer-container">
+    <h1>Interactive Sorting Visualizer</h1>
+    <p>Enter numbers, choose an algorithm, adjust speed, and see it sort in real-time.</p>
+
+    <div class="controls controls-card">
+      <select id="algorithm">
+        <option value="bubble">Bubble Sort</option>
+        <option value="selection">Selection Sort</option>
+        <option value="insertion">Insertion Sort</option>
+        <option value="merge">Merge Sort</option>
+        <option value="quick">Quick Sort</option>
+        <option value="radix">Radix Sort</option>
+        <option value="bucket">Bucket Sort</option>
+      </select>
+      <input type="text" id="arrayInput" placeholder="e.g. 12,45,3,22">
+      <label for="speedRange">Speed:</label>
+      <input type="range" id="speedRange" min="50" max="1000" step="50" value="300">
+      <span id="speedDisplay">300ms</span>
+      <button onclick="generateArray()">Generate Array</button>
+      <button id="startBtn" onclick="startSort()">Start Sorting</button>
+    </div>
+
+    <div class="legend">
+      <span class="chip chip-compare"></span> Comparing
+      <span class="chip chip-swap"></span> Swapping
+      <span class="chip chip-sorted"></span> Sorted
+    </div>
+
+    <div class="merge-panels hidden">
+      <div class="merge-card">
+        <h3>Left Half</h3>
+        <div id="merge-left" class="merge-array"></div>
+      </div>
+      <div class="merge-card">
+        <h3>Right Half</h3>
+        <div id="merge-right" class="merge-array"></div>
+      </div>
+      <div class="merge-card">
+        <h3>Merged</h3>
+        <div id="merge-merged" class="merge-array"></div>
+      </div>
+    </div>
+
+    <div id="array-container" class="array-container"></div>
+  </section>
+
+  <script>
+    let array = [];
+    let speed = 300;
+
+    // Toggle Merge Sort panels
+    const algoSelect = document.getElementById("algorithm");
+    const mergePanels = document.querySelector('.merge-panels');
+
+    function setMergePanelsVisibility() {
+      const isMerge = algoSelect.value === 'merge';
+      if (isMerge) {
+        mergePanels.classList.remove('hidden');
+      } else {
+        mergePanels.classList.add('hidden');
+        document.getElementById('merge-left').innerHTML = '';
+        document.getElementById('merge-right').innerHTML = '';
+        document.getElementById('merge-merged').innerHTML = '';
+      }
+    }
+    setMergePanelsVisibility();
+    algoSelect.addEventListener('change', setMergePanelsVisibility);
+
+    document.getElementById("speedRange").addEventListener("input", function () {
+      speed = parseInt(this.value);
+      document.getElementById("speedDisplay").textContent = `${speed}ms`;
+    });
+
+    // ✅ FIXED generateArray() - handles NaN safely
+    function generateArray() {
+      const input = document.getElementById("arrayInput").value.trim();
+
+      if (!input) {
+        alert("⚠️ Please enter some numbers separated by commas.");
+        return;
+      }
+
+      array = input
+        .split(',')
+        .map(v => v.trim())
+        .filter(v => v !== '' && !isNaN(v))
+        .map(Number);
+
+      if (array.length === 0) {
+        alert("⚠️ Invalid input. Please enter valid numbers like 12, 45, 3, 22.");
+        return;
+      }
+
+      displayArray(array);
+    }
+
+    function displayArray(arr, highlights = []) {
+      const container = document.getElementById("array-container");
+      container.innerHTML = '';
+      arr.forEach((num, idx) => {
+        const block = document.createElement("div");
+        block.className = "block";
+        if (highlights.includes(idx)) block.classList.add("highlight");
+        block.textContent = num;
+        container.appendChild(block);
+      });
+    }
+
+    function applyClasses(indexes, className) {
+      const blocks = document.querySelectorAll('#array-container .block');
+      blocks.forEach(b => b.classList.remove('compare','swap'));
+      indexes.forEach(i => {
+        if (blocks[i]) blocks[i].classList.add(className);
+      });
+    }
+
+    function markSorted(indexes) {
+      const blocks = document.querySelectorAll('#array-container .block');
+      indexes.forEach(i => {
+        if (blocks[i]) blocks[i].classList.add('sorted');
+      });
+    }
+
+    async function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    /* === Sorting Algorithms === */
+    async function bubbleSort(arr) {
+      for (let i = 0; i < arr.length - 1; i++) {
+        for (let j = 0; j < arr.length - i - 1; j++) {
+          displayArray(arr);
+          applyClasses([j, j + 1], 'compare');
+          await sleep(speed);
+          if (arr[j] > arr[j + 1]) {
+            [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+            displayArray(arr);
+            applyClasses([j, j + 1], 'swap');
+          }
+        }
+        markSorted([arr.length - 1 - i]);
+      }
+      markSorted([...Array(arr.length).keys()]);
+      displayArray(arr);
+    }
+
+    async function selectionSort(arr) {
+      for (let i = 0; i < arr.length; i++) {
+        let minIdx = i;
+        for (let j = i + 1; j < arr.length; j++) {
+          displayArray(arr);
+          applyClasses([minIdx, j], 'compare');
+          await sleep(speed);
+          if (arr[j] < arr[minIdx]) minIdx = j;
+        }
+        [arr[i], arr[minIdx]] = [arr[minIdx], arr[i]];
+        displayArray(arr);
+        applyClasses([i, minIdx], 'swap');
+        markSorted([i]);
+      }
+      markSorted([...Array(arr.length).keys()]);
+    }
+
+    async function insertionSort(arr) {
+      for (let i = 1; i < arr.length; i++) {
+        let key = arr[i];
+        let j = i - 1;
+        while (j >= 0 && arr[j] > key) {
+          arr[j + 1] = arr[j];
+          j = j - 1;
+          displayArray(arr);
+          applyClasses([j + 1, j + 2], 'compare');
+          await sleep(speed);
+        }
+        arr[j + 1] = key;
+        displayArray(arr);
+        applyClasses([j + 1], 'swap');
+      }
+      markSorted([...Array(arr.length).keys()]);
+    }
+
+    async function mergeSort(arr) {
+      const leftPanel = document.getElementById('merge-left');
+      const rightPanel = document.getElementById('merge-right');
+      const mergedPanel = document.getElementById('merge-merged');
+
+      function renderPanel(target, values, highlightIdx = -1) {
+        target.innerHTML = '';
+        values.forEach((v, i) => {
+          const el = document.createElement('div');
+          el.className = 'block';
+          el.textContent = v;
+          if (i === highlightIdx) el.classList.add('compare');
+          target.appendChild(el);
+        });
+      }
+
+      async function merge(arr, l, m, r) {
+        const L = arr.slice(l, m + 1);
+        const R = arr.slice(m + 1, r + 1);
+        let i = 0, j = 0, k = l;
+
+        renderPanel(leftPanel, L, 0);
+        renderPanel(rightPanel, R, 0);
+        renderPanel(mergedPanel, []);
+
+        while (i < L.length && j < R.length) {
+          displayArray(arr);
+          renderPanel(leftPanel, L, i);
+          renderPanel(rightPanel, R, j);
+          await sleep(speed);
+          if (L[i] <= R[j]) {
+            arr[k++] = L[i++];
+          } else {
+            arr[k++] = R[j++];
+          }
+          renderPanel(mergedPanel, arr.slice(l, k));
+        }
+
+        while (i < L.length) {
+          arr[k++] = L[i++];
+          renderPanel(mergedPanel, arr.slice(l, k));
+          displayArray(arr);
+          await sleep(speed);
+        }
+        while (j < R.length) {
+          arr[k++] = R[j++];
+          renderPanel(mergedPanel, arr.slice(l, k));
+          displayArray(arr);
+          await sleep(speed);
+        }
+        displayArray(arr);
+      }
+
+      async function helper(arr, l, r) {
+        if (l >= r) return;
+        const m = l + Math.floor((r - l) / 2);
+        await helper(arr, l, m);
+        await helper(arr, m + 1, r);
+        await merge(arr, l, m, r);
+      }
+
+      await helper(arr, 0, arr.length - 1);
+      displayArray(arr);
+      leftPanel.innerHTML = '';
+      rightPanel.innerHTML = '';
+      mergedPanel.innerHTML = '';
+      markSorted([...Array(arr.length).keys()]);
+    }
+
+    async function quickSort(arr) {
+      async function partition(arr, low, high) {
+        let pivot = arr[high], i = low - 1;
+        for (let j = low; j < high; j++) {
+          displayArray(arr, [j, high]);
+          await sleep(speed);
+          if (arr[j] < pivot) {
+            i++;
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+          }
+        }
+        [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
+        return i + 1;
+      }
+
+      async function quickSortHelper(arr, low, high) {
+        if (low < high) {
+          let pi = await partition(arr, low, high);
+          await quickSortHelper(arr, low, pi - 1);
+          await quickSortHelper(arr, pi + 1, high);
+        }
+      }
+
+      await quickSortHelper(arr, 0, arr.length - 1);
+      displayArray(arr);
+      markSorted([...Array(arr.length).keys()]);
+    }
+
+    async function radixSort(arr) {
+      const max = Math.max(...arr);
+      let exp = 1;
+      while (Math.floor(max / exp) > 0) {
+        const output = new Array(arr.length).fill(0);
+        const count = new Array(10).fill(0);
+
+        for (let i = 0; i < arr.length; i++) count[Math.floor(arr[i] / exp) % 10]++;
+        for (let i = 1; i < 10; i++) count[i] += count[i - 1];
+
+        for (let i = arr.length - 1; i >= 0; i--) {
+          const digit = Math.floor(arr[i] / exp) % 10;
+          output[count[digit] - 1] = arr[i];
+          count[digit]--;
+        }
+
+        for (let i = 0; i < arr.length; i++) {
+          arr[i] = output[i];
+          displayArray(arr, [i]);
+          await sleep(speed);
+        }
+        exp *= 10;
+      }
+      markSorted([...Array(arr.length).keys()]);
+    }
+
+    async function bucketSort(arr) {
+      const n = arr.length;
+      const max = Math.max(...arr);
+      const size = Math.floor(Math.sqrt(n));
+      const buckets = Array.from({ length: size }, () => []);
+
+      for (let i = 0; i < n; i++) {
+        const idx = Math.floor((arr[i] * size) / (max + 1));
+        buckets[idx].push(arr[i]);
+      }
+
+      for (let i = 0; i < size; i++) buckets[i].sort((a, b) => a - b);
+
+      let k = 0;
+      for (let i = 0; i < size; i++) {
+        for (let j = 0; j < buckets[i].length; j++) {
+          arr[k++] = buckets[i][j];
+          displayArray(arr, [k - 1]);
+          await sleep(speed);
+        }
+      }
+      markSorted([...Array(arr.length).keys()]);
+    }
+
+    async function startSort() {
+      const algo = document.getElementById("algorithm").value;
+      switch (algo) {
+        case "bubble": await bubbleSort(array); break;
+        case "selection": await selectionSort(array); break;
+        case "insertion": await insertionSort(array); break;
+        case "merge": await mergeSort(array); break;
+        case "quick": await quickSort(array); break;
+        case "radix": await radixSort(array); break;
+        case "bucket": await bucketSort(array); break;
+      }
+    }
+
+    // === Theme Toggle ===
+    const themeToggle = document.getElementById("theme-toggle");
+    function applyThemeFromStorage() {
+      const theme = localStorage.getItem("theme") || "light";
+      document.body.classList.toggle("dark-mode", theme === "dark");
+      themeToggle.textContent = theme === "dark" ? "☀️" : "🌙";
+    }
+    applyThemeFromStorage();
+    themeToggle.addEventListener("click", () => {
+      const nowDark = document.body.classList.toggle("dark-mode");
+      const theme = nowDark ? "dark" : "light";
+      localStorage.setItem("theme", theme);
+      themeToggle.textContent = nowDark ? "☀️" : "🌙";
+    });
+  </script>
+</body>
+</html>
